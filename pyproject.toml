@@ -1,7 +1,3 @@
-[build-system]
-requires = ["setuptools>=61.0"]
-build-backend = "setuptools.build_meta"
-
 [project]
 name = "bpp1d"
 version = "0.0.0"
@@ -21,7 +17,8 @@ classifiers = [
 ]
 dependencies = [
     "numpy",
-    "scipy"
+    "scipy",
+    "gymnasium"
 ]
 
 
@@ -37,6 +34,33 @@ convention = "numpy"
 [tool.mypy]
 [[tool.mypy.overrides]]
 module = [
-    "scipy"
+    "scipy.*"
 ]
 ignore_missing_imports = true
+
+[tool.poetry]
+name = "bpp1d"
+version = "0.0.1"
+description = "A solution set of 1d online stochastic bin packing"
+authors = ["Huayan Zhang <huayan.zhang@nottingham.edu.cn>"]
+readme = "README.md"
+
+[tool.poetry.dependencies]
+python = ">=3.11,<3.13"
+numpy = "^1.25.0"
+scipy = "^1.11.1"
+gymnasium = "^0.28.1"
+
+[tool.poetry.group.dev.dependencies]
+pytest = "^7.4.0"
+mypy = "^1.4.1"
+ruff = "^0.0.275"
+
+[[tool.poetry.source]]
+name = "tsinghua"
+url = "https://pypi.tuna.tsinghua.edu.cn/simple/"
+priority = "default"
+
+[build-system]
+requires = ["poetry-core"]
+build-backend = "poetry.core.masonry.api"
