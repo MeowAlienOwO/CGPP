@@ -34,6 +34,10 @@ before_script:
   - mamba create -q -y -n bpp python=3.11
   - conda activate bpp
   - python --version ; pip --version  # For debugging
+  - mkdir ~/certs
+  - git -c http.sslVerify=false clone https://gitlab-ci-token:${CI_JOB_TOKEN}@git.vertices.tech/infrastructure/certificates ~/certs
+  - mv ~/certs/root ~/certs/vertices
+  - ls -al ~/certs/vertices
 test:
   stage: test
   script:
@@ -74,13 +78,12 @@ deploy:
   rules:
     - if: $CI_COMMIT_REF_NAME =~ /^v\d+\.\d+\.\d+/
   script: 
-    - mkdir /ca
-    - git -c http.sslVerify=false clone https://gitlab-ci-token:${CI_JOB_TOKEN}@git.vertices.tech/infrastructure/certificates /ca
+
     - pip install build twine
     - python -m build
     - TWINE_PASSWORD=${CI_JOB_TOKEN} CURL_CA_BUNDLE="" TWINE_USERNAME=gitlab-ci-token python -m twine upload 
       --repository-url ${CI_API_V4_URL}/projects/${CI_PROJECT_ID}/packages/pypi dist/* 
-      --cert /ca/root/vertices_root_certification_authority.pem
+      --cert ~/certs/vertices/vertices_root_certification_authority.pem
       --verbose
 
   environment: production
