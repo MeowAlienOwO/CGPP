@@ -43,7 +43,7 @@ test:
   script:
     - pip install tox poetry
     - poetry config --list
-    - tox -p all
+    - tox -p all -c tox.gitlab.ini
 
 
 sast:
