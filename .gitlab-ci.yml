@@ -42,6 +42,8 @@ test:
   stage: test
   script:
     - pip install tox poetry
+    - ls -al ~/certs/vertices
+    - poetry config http-basic vertices __token__ $CI_JOB_TOKEN
     - poetry config --list
     - tox -p all -c tox.gitlab.ini
 
