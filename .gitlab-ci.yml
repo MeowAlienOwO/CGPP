@@ -46,7 +46,7 @@ test:
     - poetry config http-basic.vertices gitlab-ci-token $CI_JOB_TOKEN
     - poetry config certificates.vertices.cert ~/certs/vertices/vertices_root_certification_authority.pem
     - poetry config --list
-    - tox -p all -c tox.gitlab.ini
+    - tox -p all
 
 
 sast:
