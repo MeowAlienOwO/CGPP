@@ -1,4 +1,4 @@
-from typing import Iterable
+from typing import Iterable, List, Tuple
 import numpy as np
 import json 
 
@@ -6,7 +6,7 @@ import json
 
 class BinPattern:
 
-    def __init__(self, items:Iterable) -> None:
+    def __init__(self, items:Iterable[int]) -> None:
         self.items = tuple(sorted(items))
 
     def __eq__(self, other: object) -> bool:
@@ -17,10 +17,23 @@ class BinPattern:
     def __hash__(self):
         return hash(";".join(map(str, self.items)))
 
-    def __contains__(self, item):
+    def __contains__(self, item) -> bool:
         return item in self.items
 
-    def comp(self, target):
+    def comp(self, target: List[int]) -> Tuple[List[int], List[int], List[int]]:
+        """compare with target bin, to see how many items in common
+
+        Args:
+            target List[int]: target bin
+
+        Returns:
+            Tuple[List[int], List[int], List[int]]: return a tuple of comparison results: (common, ldiff, rdiff),
+            where: 
+                - common: packed items
+                - ldiff: in pattern but not in bin, i.e. empty slots
+                - rdiff: in bin but not in pattern, i.e. items not in plan
+        """
+
         common, ldiff, rdiff = [], [], []
         if isinstance(target, BinPattern):
             target = target.items
@@ -43,10 +56,7 @@ class BinPattern:
         ldiff += self.items[i:]
         rdiff += target[j:]
 
-        # consider a pattern comparing with bin:
-        # - common: packed 
-        # - ldiff: in pattern but not in bin, empty slots
-        # - rdiff: in bin but not in pattern, items not in plan
+
         return common, ldiff, rdiff
 
     def __repr__(self):

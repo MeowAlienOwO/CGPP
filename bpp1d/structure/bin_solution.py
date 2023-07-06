@@ -1,7 +1,8 @@
 from typing import  List
 from .solution import Solution
+import json
 
-from bpp1d.solutions.bpp_bin import BppBin
+from bpp1d.structure.bpp_bin import BppBin
 
 
 
@@ -58,20 +59,15 @@ class BinSolution(Solution):
                 f.write(line + '\n')
     
     @property
-    def min_bin(self):
+    def min_filled_bin(self):
         return min(self.bins, key=lambda b: b.filled_space)
 
     @property
-    def max_bin(self):
-        return max(self.bins, key=lambda b: b.filled_space)   
-    
-    @property
-    def capacity(self) -> int:
-        return self._capacity
-    
-    @capacity.setter
-    def capacity(self, value: int) -> None:
-        if(value < 0):
-            raise ValueError("Capacity should be greater than zero")
-        self._capacity = value
+    def max_filled_bin(self):
+        return max(self.bins, key=lambda b: b.filled_space)
 
+    def to_json(self) -> str:
+        return json.dumps({
+            "metrics": self.metrics(),
+            "bins": self.bins
+        })
