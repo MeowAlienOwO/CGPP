@@ -6,16 +6,18 @@ from bpp1d.structure import Solution
 
 
 class Model:
-    def __init__(self, name: str = 'model'):
+    def __init__(self,capacity:int, instance:Sequence[int], name: str = 'model'):
         self.name = name
+        self.instance = instance
+        self.capacity = capacity
 
-    def build(self, *args, **kwargs) -> Any:
+    def build(self) -> Any:
         """build the model
         """
         pass
 
     @abstractmethod
-    def solve(self, instance:Sequence[int]) -> Tuple[Solution, Dict | None]:
+    def solve(self) -> Tuple[Solution, Dict | None]:
         """solve problem instance
         """
         raise NotImplementedError

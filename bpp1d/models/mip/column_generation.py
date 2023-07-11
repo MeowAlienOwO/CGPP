@@ -38,7 +38,7 @@ class ColumnGeneration:
     def _call_solver(self, problem, relax:bool = False):
         problem.solve(PULP_CBC_CMD(msg = False, mip=not relax))
         
-    def solve(self, max_iter: int=1000) -> Dict | None:
+    def solve(self, max_iter: int=1000) -> Dict[BinPattern, int] | None:
 
         patterns = np.zeros((len(self.demands), len(self.demands)), dtype=np.int64)
         for i, item in enumerate(self.demands):

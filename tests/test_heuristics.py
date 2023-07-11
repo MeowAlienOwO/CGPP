@@ -24,8 +24,8 @@ TEST_CASES_BF = [
     
 )
 def test_best_fit(capacity: int, instance: Sequence[int], expected: List[List[int]]):
-    model = HeuristicModel(capacity)
-    solution, _ = model.solve(instance)
+    model = HeuristicModel(capacity, instance)
+    solution, _ = model.solve()
 
     assert len(solution.bins) == len(expected)
     for bin, exp in zip(solution.bins, expected):

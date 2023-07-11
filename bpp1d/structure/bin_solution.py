@@ -1,4 +1,4 @@
-from typing import  List
+from typing import Sequence
 from .solution import Solution
 import json
 
@@ -8,7 +8,7 @@ from bpp1d.structure.bpp_bin import BppBin
 
 
 class BinSolution(Solution):
-    def __init__(self,capacity: int, bins:List[BppBin] | None = None) -> None:
+    def __init__(self,capacity: int, bins:Sequence[BppBin] | None = None) -> None:
         self.bins = [b for b in bins if not b.empty] if bins is not None else []
         self.capacity = capacity
 

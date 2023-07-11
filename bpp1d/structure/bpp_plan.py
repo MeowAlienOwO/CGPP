@@ -92,8 +92,17 @@ class BinPlanExecutor:
     def __init__(self, plan: BppPlan, capacity: int, bins:List[BinWithPattern] | None=None) -> None:
         self.bins = bins if bins is not None else []
         self.capacity = capacity
-        self.plan = plan.copy()
+        self.plan = plan
         # self.force_match_pattern = force_match_pattern
+    
+    
+    @property
+    def plan(self) -> BppPlan:
+        return self._plan
+
+    @plan.setter
+    def plan(self, value: BppPlan):
+        self._plan = value.copy()
     
     def put(self, item: int, fallback: HeuristicChoiceFn | None = None) -> int:
         matched_bins = [b for b in self.bins if item in b.check()[1] and b.empty_space >= item]

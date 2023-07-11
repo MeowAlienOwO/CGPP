@@ -1,25 +1,31 @@
-import numpy as np
-from typing import Dict, Any, Tuple
+from typing import Dict, Any, Sequence, Tuple, List
+from bpp1d.structure.bpp_bin import BinWithPattern
+
+from bpp1d.structure.bpp_plan import BinPlanExecutor
 from .model import Model
 from .mip.column_generation import ColumnGeneration
-from bpp1d.structure import BppPlan, BppBin, Solution
-from bpp1d.utils.anyfit import b
+from bpp1d.structure import BppPlan, Solution, BinSolution
+from bpp1d.utils.anyfit import best_fit_choice
 
 
 class CGFit(Model):
-    def __init__(self, name: str = 'cg_fit', max_iter: int = 1000):
-        super().__init__(name)
-        self.max_iter= max_iter
 
+    def __init__(self, capacity: int, instance: Sequence[int], 
+                    demands: Dict[int, int], name: str = 'cg_fit'):
+        super().__init__(capacity, instance, name)
+        self.demands = demands
 
-    def build(self, *args, **kwargs) -> Any:
-        # items:Iterable[int] = np.array(kwargs['items'])
-        demands:Dict[int, int] = np.array(kwargs['demands'])
-        capacity:int = kwargs['capacity']
-        
-        cg = ColumnGeneration(capacity, demands)
-        plan = cg.solve()
-        return BppPlan(plan)
-    
-    def solve(self, problem, *args, **kwargs)  -> Tuple[Solution, Dict | None]:
-        pass
+    def build(self) -> Any:
+        cg = ColumnGeneration(self.capacity, self.demands)
+        result = cg.solve()
+        if result is not None:
+            self.plan = BppPlan(result, self.capacity)
+
+    def solve(self)  -> Tuple[Solution, Dict | None]:
+        assert self.plan is not None
+        bins: List[BinWithPattern] = []
+        plan_executor = BinPlanExecutor(self.plan, self.capacity, bins)
+        for item in self.instance:
+            plan_executor.put(item, best_fit_choice)
+
+        return BinSolution(self.capacity, bins), {"plan": self.plan}
