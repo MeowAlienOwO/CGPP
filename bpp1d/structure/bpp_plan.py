@@ -2,7 +2,7 @@ from typing import  Dict, List, Tuple
 import json
 import numpy as np
 from .bpp_bin import BinWithPattern
-from .bpp_pattern import BinPattern
+from .bin_pattern import BinPattern
 from bpp1d.utils.anyfit import HeuristicChoiceFn, best_fit_choice
 
 class BppPlan:

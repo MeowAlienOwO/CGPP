@@ -15,7 +15,7 @@ class Model:
         pass
 
     @abstractmethod
-    def solve(self, instance:Sequence[int]) -> Tuple[Solution, Dict | None]:  # noqa: F821
+    def solve(self, instance:Sequence[int]) -> Tuple[Solution, Dict | None]:
         """solve problem instance
         """
         raise NotImplementedError

@@ -24,6 +24,7 @@ before_script:
   - conda install mamba -c conda-forge
   - mamba create -q -y -n bpp python=3.11
   - conda activate bpp
+  - mamba install gltk -c conda-forge
   - python --version ; pip --version  # For debugging
   - mkdir ~/certs
   - git -c http.sslVerify=false clone https://gitlab-ci-token:${CI_JOB_TOKEN}@git.vertices.tech/infrastructure/certificates ~/certs

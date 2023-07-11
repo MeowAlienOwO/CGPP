@@ -1,4 +1,4 @@
-from typing import Iterable, List, Tuple
+from typing import Dict, Iterable, List, Tuple
 import numpy as np
 import json 
 
@@ -19,6 +19,9 @@ class BinPattern:
 
     def __contains__(self, item) -> bool:
         return item in self.items
+
+    def as_dict(self) -> Dict[int, int]:
+        return {i:self.items.count(i) for i in set(self.items)}
 
     def comp(self, target: List[int]) -> Tuple[List[int], List[int], List[int]]:
         """compare with target bin, to see how many items in common

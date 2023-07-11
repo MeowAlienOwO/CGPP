@@ -1,6 +1,6 @@
 from typing import List
 import pytest
-from bpp1d.structure.bpp_pattern import BinPattern
+from bpp1d.structure.bin_pattern import BinPattern
 from bpp1d.structure.bpp_plan import BinPlanExecutor, BppPlan
 import random
 

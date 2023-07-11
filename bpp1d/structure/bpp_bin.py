@@ -3,7 +3,7 @@ import numpy as np
 from numpy.typing import ArrayLike
 import json
 
-from .bpp_pattern import BinPattern
+from .bin_pattern import BinPattern
 
 
 
