@@ -1,7 +1,7 @@
 from typing import Dict, List, Sequence, Tuple
 from bpp1d.structure import BinSolution, BppBin, Solution
 from bpp1d.utils.anyfit import HeuristicChoiceFn, best_fit_choice
-from .model import Model
+from .model import Model, ModelStatus
 
 class HeuristicModel(Model):
 
@@ -10,14 +10,16 @@ class HeuristicModel(Model):
                     choice_fn: HeuristicChoiceFn | None = None):
         super().__init__(capacity, instance, name)
         self.choice_fn = choice_fn if choice_fn is not None else best_fit_choice
-    
+        self.bins: List[BppBin] = []
 
     def solve(self) -> Tuple[Solution, Dict | None]:
-        bins: List[BppBin] = []
+        self.status = ModelStatus.SOLVING
         for item in self.instance:
-            choice = self.choice_fn(item, bins)
+            choice = self.choice_fn(item, self.bins)
             if choice < 0:
-                bins.append(BppBin(self.capacity, [item]))
+                self.bins.append(BppBin(self.capacity, [item]))
             else:
-                bins[choice].pack(item)
-        return BinSolution(self.capacity, bins), None
+                self.bins[choice].pack(item)
+        
+        self.status = ModelStatus.FINISHED
+        return BinSolution(self.capacity, self.bins), None

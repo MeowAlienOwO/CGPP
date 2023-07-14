@@ -5,6 +5,8 @@ from .bpp_bin import BinWithPattern
 from .bin_pattern import BinPattern
 from bpp1d.utils.anyfit import HeuristicChoiceFn, best_fit_choice
 
+
+
 class BppPlan:
     def __init__(self, pattern_dict:Dict[BinPattern, int], capacity: int) -> None:
         self.capacity = capacity
@@ -88,6 +90,11 @@ class BppPlan:
 def new_bin_with_pattern_callback(capacity: int, pattern: BinPattern):
     return BinWithPattern(capacity, pattern)
 
+class OutOfPlanException(Exception):
+    def __init__(self, *args: object) -> None:
+        super().__init__(*args)
+
+
 class BinPlanExecutor:
     def __init__(self, plan: BppPlan, capacity: int, bins:List[BinWithPattern] | None=None) -> None:
         self.bins = bins if bins is not None else []
@@ -103,7 +110,16 @@ class BinPlanExecutor:
     @plan.setter
     def plan(self, value: BppPlan):
         self._plan = value.copy()
-    
+
+    def is_fit(self, item: int) -> bool:
+        for pattern, count in self.plan.items():
+            if item in pattern and count > 0:
+                return True
+        
+        check_bin_fit = [b.check()[1] for b in self.bins]
+        any_bin_fit = any(item in c for c in check_bin_fit)
+        return any_bin_fit
+
     def put(self, item: int, fallback: HeuristicChoiceFn | None = None) -> int:
         matched_bins = [b for b in self.bins if item in b.check()[1] and b.empty_space >= item]
         if matched_bins:
@@ -119,8 +135,11 @@ class BinPlanExecutor:
                 choice = -1
                 return choice
             else:
-                fallback = fallback if fallback is not None else best_fit_choice
-                choice = fallback(item, self.bins)
+                # fallback = fallback if fallback is not None else best_fit_choice
+                if fallback is None:
+                    raise OutOfPlanException()
+                else:
+                    choice = fallback(item, self.bins)
                 if choice < 0:
                     self.bins.append(BinWithPattern(self.capacity, pattern=BinPattern([item]), items=[item]))
                 else:

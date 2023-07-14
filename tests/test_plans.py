@@ -2,6 +2,7 @@ from typing import List
 import pytest
 from bpp1d.structure.bin_pattern import BinPattern
 from bpp1d.structure.bpp_plan import BinPlanExecutor, BppPlan
+from bpp1d.utils.anyfit import best_fit_choice
 import random
 
 
@@ -91,7 +92,7 @@ def test_plan_not_perfect(plan: BppPlan, items: List[int], expected: List[List[i
     executor = BinPlanExecutor(plan, TEST_CAPACITY, [])
 
     for i in items:
-        executor.put(i)
+        executor.put(i, best_fit_choice)
 
     assert len(executor.bins) == len(expected)
 

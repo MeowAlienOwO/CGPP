@@ -1,0 +1,24 @@
+name: bpp3d
+channels:
+  - pytorch
+  - nvidia
+  - conda-forge
+  # We want to have a reproducible setup, so we don't want default channels,
+  # which may be different for different users. All required channels should
+  # be listed explicitly here.
+  # - nodefaults
+dependencies:
+  - python=3.11.*  # or don't specify the version and use the latest stable Python
+  - mamba
+  - numpy=1.24.4
+  - tianshou=0.5.0
+  - scipy=1.11.1
+  - pytorch=2.0.1
+  - pytorch-cuda=11.7
+  - poetry=1.5.*
+  - pip  # pip must be mentioned explicitly, or conda-lock will fail
+
+
+# Non-standard section listing target platforms for conda-lock:
+platforms:
+  - linux-64
