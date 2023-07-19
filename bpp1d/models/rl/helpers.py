@@ -1,7 +1,7 @@
 import torch
 from torch.distributions.categorical import Categorical
 from torch.nn.functional import softmax
-import numpy as np
+# import numpy as np
 
 def masked_softmax(vector: torch.Tensor,
                    mask: torch.Tensor,

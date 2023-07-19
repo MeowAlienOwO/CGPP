@@ -3,7 +3,7 @@ import json
 import numpy as np
 from .bpp_bin import BinWithPattern
 from .bin_pattern import BinPattern
-from bpp1d.utils.anyfit import HeuristicChoiceFn, best_fit_choice
+from bpp1d.utils.heuristic_choice import HeuristicChoiceFn
 
 
 
@@ -11,6 +11,7 @@ class BppPlan:
     def __init__(self, pattern_dict:Dict[BinPattern, int], capacity: int) -> None:
         self.capacity = capacity
         self.plan_dict = pattern_dict.copy()
+
 
     def __setitem__(self, key: Tuple | BinPattern, val: int) -> None:
         if not isinstance(key, BinPattern):
@@ -137,7 +138,7 @@ class BinPlanExecutor:
             else:
                 # fallback = fallback if fallback is not None else best_fit_choice
                 if fallback is None:
-                    raise OutOfPlanException()
+                    raise OutOfPlanException(f"item: {item} plan:{str(self._plan)}")
                 else:
                     choice = fallback(item, self.bins)
                 if choice < 0:

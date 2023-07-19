@@ -20,3 +20,4 @@ Environment stack:
 - poetry: package manager for most of used libs
 - tox: manage testing(typing, linting) with poetry, **do not** create extra virtual env
 
+- tox-current-env: let conda and poetry manage all environments

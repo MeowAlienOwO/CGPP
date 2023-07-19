@@ -37,6 +37,8 @@ module = [
     "scipy.*",
     "pulp.*",
     "pulp2mat",
+    "bpp3d_dataset.*",
+    "tianshou.*"
 ]
 ignore_missing_imports = true
 
@@ -63,14 +65,31 @@ tianshou = "0.5.0"
 # bpp3d-dataset = ">=0.0.8"
 gymnasium = "^0.28.1"
 pulp = "^2.7.0"
-bpp3d-dataset = {version = "^0.0.9", source = "vertices"}
+bpp3d-dataset = "0.1.3"
+typer = "^0.9.0"
 
 [tool.poetry.group.dev.dependencies]
 
 pytest = "^7.4.0"
 mypy = "^1.4.1"
-ruff = "^0.0.278"
+ruff = "^0.0.275"
 tox = "^4.6.4"
+tox-current-env = "^0.0.11"
+
+
+
+
+# [tool.poetry.group.torch_cpu]
+# optional = true
+
+# [tool.poetry.group.torch_cpu.dependencies]
+# torch = { version = "2.0.1", source="torch_cpu" }
+
+# [tool.poetry.group.torch_cuda]
+# optional = true
+
+# [tool.poetry.group.torch_cuda.dependencies]
+# torch = { version = "2.0.1" }
 
 
 [[tool.poetry.source]]
@@ -82,6 +101,12 @@ priority = "supplemental"
 [[tool.poetry.source]]
 name = "PyPI"
 priority = "primary"
+
+
+# [[tool.poetry.source]]
+# name = "torch_cpu"
+# url = "https://download.pytorch.org/whl/cpu"
+# priority = "supplemental"
 
 [build-system]
 requires = ["poetry-core"]

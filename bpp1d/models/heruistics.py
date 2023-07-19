@@ -1,6 +1,6 @@
 from typing import Dict, List, Sequence, Tuple
 from bpp1d.structure import BinSolution, BppBin, Solution
-from bpp1d.utils.anyfit import HeuristicChoiceFn, best_fit_choice
+from bpp1d.utils.heuristic_choice import HeuristicChoiceFn, best_fit_choice
 from .model import Model, ModelStatus
 
 class HeuristicModel(Model):

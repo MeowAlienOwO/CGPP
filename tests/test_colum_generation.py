@@ -1,6 +1,6 @@
 import pytest
 from bpp1d.structure import BinPattern
-from bpp1d.models.mip import ColumnGeneration, SolutionStatus
+from bpp1d.models.mip import ColumnGeneration, MipSolverStatus
 
 TEST_CASES = [
     
@@ -39,7 +39,7 @@ def test_column_generation(instance, capacity, expected_plan):
     cg = ColumnGeneration(capacity, demands)
     plan = cg.solve()
     assert plan is not None
-    assert cg.status == SolutionStatus.FINISHED
+    assert cg.status == MipSolverStatus.FINISHED
     # patterns = [key for key in expected_plan.keys()]
 
     plan_demand = {}

@@ -9,7 +9,7 @@ from itertools import chain
 
 from bpp1d.structure import BinPattern
 
-class SolutionStatus(Enum):
+class MipSolverStatus(Enum):
     FINISHED = 0
     UNFINISHED = 1
     TIMEOUT = 2
@@ -22,7 +22,7 @@ class ColumnGeneration:
         self.capacity = capacity
         self.demands = demands
         self.num_items = len(demands)
-        self.status: SolutionStatus = SolutionStatus.UNFINISHED
+        self.status: MipSolverStatus = MipSolverStatus.UNFINISHED
         self.verbose = verbose
         # initalize patterns
 
@@ -61,11 +61,11 @@ class ColumnGeneration:
                 print(master_prob.objective.values())
 
             if dual_prob.objective.value() <= 1 + 10e-7:
-                self.status = SolutionStatus.FINISHED
+                self.status = MipSolverStatus.FINISHED
                 break
         
-        if self.status != SolutionStatus.FINISHED:
-            self.status = SolutionStatus.TIMEOUT
+        if self.status != MipSolverStatus.FINISHED:
+            self.status = MipSolverStatus.TIMEOUT
             return None
         else:
             master_prob, x, _ = self._solve_master(patterns, relax=False)

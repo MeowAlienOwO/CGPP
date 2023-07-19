@@ -5,13 +5,13 @@ from bpp1d.structure.bpp_plan import BinPlanExecutor
 from .model import Model, ModelStatus
 from .mip.column_generation import ColumnGeneration
 from bpp1d.structure import BppPlan, Solution, BinSolution
-from bpp1d.utils.anyfit import best_fit_choice
+from bpp1d.utils.heuristic_choice import best_fit_choice
 
 
 class CGFit(Model):
 
     def __init__(self, capacity: int, instance: Sequence[int], 
-                    demands: Dict[int, int], name: str = 'cg_fit'):
+                    demands: Dict[int, int], name='cg_fit'):
         super().__init__(capacity, instance, name)
         self.demands = demands
         self.bins: List[BinWithPattern] = []
@@ -21,6 +21,7 @@ class CGFit(Model):
         result = cg.solve()
         if result is not None:
             self.plan = BppPlan(result, self.capacity)
+        return super().build()
 
     def solve(self)  -> Tuple[Solution, Dict | None]:
         assert self.plan is not None
@@ -31,4 +32,4 @@ class CGFit(Model):
         
         self.status = ModelStatus.FINISHED
 
-        return BinSolution(self.capacity, self.bins), {"plan": self.plan}
+        return BinSolution(self.capacity, self.bins), {} #{"plan": self.plan}
