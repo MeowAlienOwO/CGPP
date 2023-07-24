@@ -1,9 +1,11 @@
-from typing import  Dict, List, Tuple
+from typing import  Dict, List, Tuple, Sequence
 import json
 import numpy as np
-from .bpp_bin import BinWithPattern
+import math
+from .bpp_bin import BppBin, BinWithPattern
 from .bin_pattern import BinPattern
-from bpp1d.utils.heuristic_choice import HeuristicChoiceFn
+
+from bpp1d.utils.heuristic_choice import HeuristicChoiceFn, best_fit_choice
 
 
 
@@ -52,6 +54,25 @@ class BppPlan:
     def items(self):
         return self.plan_dict.items()
     
+    def metrics(self):
+        return {
+            'exp_fill_rate': sum([self.plan_dict[k] 
+                                        for k in self.keys() if sum(k.items) == self.capacity ]) / sum(self.values()),
+            'exp_bins': sum(self.values()),
+        }
+    def check_plan_execution(self, bins: Sequence[BppBin]) -> float:
+        res = {}
+        for b in bins:
+            pattern = tuple(sorted(b.items))
+            if pattern in self.plan_dict:
+                res[pattern] = res.get(pattern, 0) + 1
+        
+        for k, v in self.items():
+            res[k] = res.get(k, 0) - v 
+        
+        return sum([v for v in res.values() if v > 0])
+
+    
     def useone(self, pattern: BinPattern) -> BinWithPattern:
         """use one of pattern, this will alter the plan dictionary
         Args:
@@ -97,13 +118,21 @@ class OutOfPlanException(Exception):
 
 
 class BinPlanExecutor:
-    def __init__(self, plan: BppPlan, capacity: int, bins:List[BinWithPattern] | None=None) -> None:
+    def __init__(self, plan: BppPlan, capacity: int, # demands: Dict[int, int],
+                    bins:List[BinWithPattern] | None=None, 
+                    shall_rebalance = True,
+                    balance_empty_threshold=0.2,
+                    balance_k_bins = 200) -> None:
         self.bins = bins if bins is not None else []
         self.capacity = capacity
         self.plan = plan
-        # self.force_match_pattern = force_match_pattern
+        # self.demands = demands
+        self.extra_demands = {} # stores items that been replaced out
+        self.balance_empty_threshold = balance_empty_threshold
+        self.balance_k_bins = balance_k_bins
+        self.shall_rebalance = shall_rebalance
     
-    
+
     @property
     def plan(self) -> BppPlan:
         return self._plan
@@ -121,28 +150,76 @@ class BinPlanExecutor:
         any_bin_fit = any(item in c for c in check_bin_fit)
         return any_bin_fit
 
+    def heuristic_put(self, item: int, fallback: HeuristicChoiceFn) -> int:
+        choice = fallback(item, self.bins)
+
+        if choice < 0:
+            self.bins.append(BinWithPattern(self.capacity, pattern=BinPattern([item, self.capacity-item]), items=[item]))
+            return choice
+        else:
+            # adjust pattern and record replacement
+            bin = self.bins[choice]
+            # find the replacement of patterns with current items
+            packed, non_packed, _ = bin.check()
+            non_packed = sorted(non_packed)
+
+            replacement_idx = 0
+            for i in range(len(non_packed)):
+                if sum(non_packed[:i]) >= item:
+                    replacement_idx = i
+                    break
+            replacement = non_packed[:replacement_idx]
+            new_pattern = packed + [item] + non_packed[replacement_idx:]
+            if sum(new_pattern) < bin.capacity:
+                new_pattern.append(bin.capacity - sum(new_pattern))
+            bin.pattern = BinPattern(new_pattern)
+            # update extra demands, so that in next plan we will consider 
+            # the items that involved in current plan
+            for i in replacement:
+                self.extra_demands[i] = self.extra_demands.get(i, 0)+ 1
+
+            bin.pack(item)
+            return choice       
+        
+
+
     def put(self, item: int, fallback: HeuristicChoiceFn | None = None) -> int:
         matched_bins = [b for b in self.bins if item in b.check()[1] and b.empty_space >= item]
+        # number of bins whose filled space less than threshold
+        num_nonfill_bins = len([ b for b in self.bins 
+                                if b.filled_space / b.capacity < self.balance_empty_threshold])
         if matched_bins:
             choice = self.bins.index(matched_bins[0])
             matched_bins[0].pack(item)
             return choice
+        elif num_nonfill_bins >= self.balance_k_bins and self.shall_rebalance:
+            # force fill bins 
+            choice = self.heuristic_put(item, fallback if fallback is not None else best_fit_choice)
+            return choice
         else:
             pattern = self.plan.match(item)
             if pattern is not None:
+                # find a pattern can be put into plan
                 newbin = self.plan.useone(pattern)
                 newbin.pack(item)
                 self.bins.append(newbin)
                 choice = -1
                 return choice
+
             else:
                 # fallback = fallback if fallback is not None else best_fit_choice
+
+
                 if fallback is None:
                     raise OutOfPlanException(f"item: {item} plan:{str(self._plan)}")
                 else:
-                    choice = fallback(item, self.bins)
-                if choice < 0:
-                    self.bins.append(BinWithPattern(self.capacity, pattern=BinPattern([item]), items=[item]))
-                else:
-                    self.bins[choice].pack(item)
-                return choice
+                    choice = self.heuristic_put(item, fallback)
+                    return choice
+                #     choice = fallback(item, self.bins)
+
+                # if choice < 0:
+                #     self.bins.append(BinWithPattern(self.capacity, 
+                #                                     pattern=BinPattern([item, self.capacity - item]), items=[item]))
+                # else:
+                #     self.bins[choice].pack(item)
+                # return choice

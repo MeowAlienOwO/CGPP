@@ -3,7 +3,8 @@ from bpp1d.structure.bpp_bin import BinWithPattern
 
 from bpp1d.structure.bpp_plan import BinPlanExecutor
 from .model import Model, ModelStatus
-from .mip.column_generation import ColumnGeneration
+# from .mip.column_generation import ColumnGeneration
+from .mip.column_generation_scipy import CGScipy
 from bpp1d.structure import BppPlan, Solution, BinSolution
 from bpp1d.utils.heuristic_choice import best_fit_choice
 
@@ -17,15 +18,18 @@ class CGFit(Model):
         self.bins: List[BinWithPattern] = []
 
     def build(self) -> Any:
-        cg = ColumnGeneration(self.capacity, self.demands)
+        # cg = ColumnGeneration(self.capacity, self.demands)
+        cg = CGScipy(self.capacity, self.demands)
         result = cg.solve()
         if result is not None:
             self.plan = BppPlan(result, self.capacity)
+        else:
+            raise ValueError("infeasible solution")
         return super().build()
 
     def solve(self)  -> Tuple[Solution, Dict | None]:
         assert self.plan is not None
-        self.plan_executor = BinPlanExecutor(self.plan, self.capacity, self.bins)
+        self.plan_executor = BinPlanExecutor(self.plan, self.capacity, self.bins, shall_rebalance=False)
         self.status = ModelStatus.SOLVING
         for item in self.instance:
             self.plan_executor.put(item, best_fit_choice)

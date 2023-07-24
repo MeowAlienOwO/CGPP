@@ -41,6 +41,7 @@ def train_ppo(distribution: Discrete, capacity:int, target_problem: Problem,
                             capacity, reset_distribution=distribution)
     
     def _test_env_create(instance: BppInstance):
+        # print(instance.configuration['capacity'])
         return Bpp1DPotentialEnv(instance, instance.configuration['capacity'])
 
     def _dist_fn(*logits):

@@ -22,7 +22,7 @@ class BinSolution(Solution):
         return len(self.bins)
         
     def __repr__(self):
-        repr_str = "\n".join(["{}: {}".format(k, v) for k, v in self.metrics().items()])
+        repr_str = "\n".join(["{}: {}".format(k, v) for k, v in self.metrics.items()])
         return repr_str
 
     def show_exact(self):
@@ -39,7 +39,7 @@ class BinSolution(Solution):
             'item_count': int(self.total_items),
             'bins': self.num_bins,
             'waste': int(self.waste),
-            'filled_rate': self.num_filled_bins / self.num_bins
+            'filled_rate': self.num_filled_bins / self.num_bins,
         }
     @property
     def waste(self):

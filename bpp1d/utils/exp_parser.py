@@ -4,10 +4,10 @@ from typing import Dict, List, Sequence
 from bpp1d.models import VALID_MODELS, Model, RLModel, CGFit, CGReplan, CGStateShift
 from bpp1d.models.heruistics import HeuristicModel
 from bpp1d.utils.heuristic_choice import generate_heuristic
-from bpp3d_dataset.utils.distributions import Discrete, Uniform, Binomial, Poisson, generate_discrete
+from bpp3d_dataset.utils.distributions import Discrete, Uniform, Binomial, Poisson, generate_discrete_dist
 from bpp3d_dataset.problems import Problem, make_bpp, Bpp1DRandomInitiator
 
-from bpp1d.utils.state_estimator import SimpleStateEstimator
+from bpp1d.utils.state_estimator import KernelDensityEstimator, SimpleStateEstimator
 
 
 class BaseConfig:
@@ -55,7 +55,7 @@ class ExpModelConfig(BaseConfig):
     
     @property
     def models(self) -> List[str]:
-        return [k for k in self._config_dict.keys() if k in VALID_MODELS]
+        return [k for k in self._config_dict.keys()]
 
     def get_config(self, key: str) -> Dict:
         return self._config_dict[key]
@@ -65,48 +65,63 @@ class ExpModelConfig(BaseConfig):
 
     def _create_single(self, model_name: str, capacity: int, instance: Sequence[int]) -> Model:
         config = self.get_config(model_name)
-        if model_name == 'heuristic':
-            choice_fn = generate_heuristic(config['type'])
-            return HeuristicModel(capacity, instance, name=config['type'], choice_fn= choice_fn)
-        elif model_name == 'rl_model':
+        model_type = config['type']
+        if model_type == 'heuristic':
+            choice_fn = generate_heuristic(config['heuristic'])
+            return HeuristicModel(capacity, instance, name=model_name, choice_fn= choice_fn)
+        elif model_type == 'rl_model':
             return RLModel(capacity, instance, config['checkpoint_path'])
-        elif model_name == 'cg_fit':
-            demand = config.get('demand', {i: instance.count(i) 
-                                            for i in sorted(list(set(instance)))})
-            return CGFit(capacity, instance, demand)
+        elif model_type == 'cg_fit':
+            # demand = config.get('demand', {i: instance.count(i) 
+                                            # for i in sorted(list(set(instance)))})
 
-        elif model_name == 'cg_replan':
+            demand = {int(k): v for k ,v in config.get('demand', {}).items()}
+            
+            return CGFit(capacity, instance, demand, name=model_name)
+
+        elif model_type == 'cg_replan':
             dist = config['priori']
-            items = sorted(set(instance))
-            distribution = self._generate_distribution(dist, items)
+            # items = sorted(set(instance))
+            # distribution = self._generate_distribution(dist, items)
+            items = self._generate_item_size(dist, instance)
+            distribution = generate_discrete_dist(dist_key=dist['name'], items=items, kwargs=dist)
+            # print(distribution)
             
             return CGReplan(capacity, instance, distribution, consider_opened_bins=True)
 
-        elif model_name == 'cg_shift':
+        elif model_type == 'cg_shift':
             dist = config['priori']
-            items = sorted(set(instance))
-            distribution = self._generate_distribution(dist, items)
-            state_estimator = SimpleStateEstimator(distribution)
+            # items = sorted(set(instance))
+            items = self._generate_item_size(dist, instance)
+            distribution = generate_discrete_dist(dist_key=dist['name'], items=items, kwargs=dist)
+            # distribution = self._generate_distribution(dist, items)
+            if 'estimator' in config:
+                if config['estimator'] == 'kernel':
+                    state_estimator = KernelDensityEstimator(distribution)
+                else:
+                    state_estimator = SimpleStateEstimator(distribution)
+            else:
+                state_estimator = SimpleStateEstimator(distribution)
+            # print(distribution)
             return CGStateShift(capacity, instance, state_estimator, consider_opened_bins=True)
         else:
-            raise NotImplementedError(f"Model {model_name} is not implemented")
-
-    def _generate_distribution(self, dist: Dict, items: Sequence[int]) -> Discrete:
-        dist_name = dist['name']
-        if dist_name == 'uniform':
-            return Uniform(items)
-        elif dist_name == 'normal':
-            p = dist.get('p', 0.5)
-            return Binomial(items, p)
-        elif dist_name == 'poisson':
-            mu = dist.get('mu', 0.6)
-            return Poisson(items, mu)
-        elif dist_name == 'discrete':
-            items = dist.get('items', items)
-            probs = dist['probs']
-            return Discrete(probs, items)
+            raise NotImplementedError(f"Model {model_type} is not implemented")
+    
+    def _generate_item_size(self, dist: Dict, instance: Sequence[int]):
+        if 'items' in dist:
+            if isinstance(dist['items'], List):
+                # list of item size
+                return sorted(dist['items'])
+            elif isinstance(dist['items'], Dict):
+                # define start, end, step to generate items
+                i,j,s = dist['items'].get('start', 0), dist['items'].get('end'), dist['items'].get('step', 1)
+                return list(range(i, j, s))
+            else:
+                raise NotImplementedError(f"Item definition not implemented: {dist}")
         else:
-            raise NotImplementedError(f"Distribution {dist_name} is not implemented")
+            return sorted(list(set(instance)))
+
+
 
 class ExpProblemConfig(BaseConfig):
     def __init__(self, content: Path | str | Dict) -> None:
@@ -120,20 +135,6 @@ class ExpProblemConfig(BaseConfig):
             initiator = Bpp1DRandomInitiator(capacity=self.config['capacity'],
                                                 item_num=self.config['item_num'],
                                                 instance_num=self.config['instance_num'],
-                                                distribution=generate_discrete(**self.config['distribution'])
+                                                distribution=generate_discrete_dist(**self.config['distribution'])
                                             )
             return Problem(initiator, None)
-# 
-
-
-# def parse_model_config_file(file: Path) -> ExpModelConfig:
-#     """A simple wrapper of ExpModelConfig
-
-#     Args:
-#         file (Path): configuration file
-
-#     Returns:
-#         ExpModelConfig: configuration object
-#     """
-
-#     return ExpModelConfig(file)

@@ -47,3 +47,6 @@ def first_fit_choice(item: int, bins: Sequence[BppBin]) -> int:
     else:
         choice = bins.index(fit[0])
     return choice
+
+def refined_harmonic(item: int, bins:Sequence[BppBin]) -> int:
+    pass

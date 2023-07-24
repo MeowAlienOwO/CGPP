@@ -1,19 +1,22 @@
 from enum import Enum
-import json
+# import json
+import commentjson as json
 from pathlib import Path
 import os
 from typing import Any, Dict, List, Optional, Sequence
 import typer
 from typer import Option, Argument
 from typing_extensions import Annotated
-from bpp3d_dataset.utils.distributions import Discrete, Uniform, Binomial
+from bpp3d_dataset.utils.distributions import generate_discrete_dist
 from bpp3d_dataset.problems import Problem, Bpp1DRandomInitiator
 from bpp1d.models.cg_fit import CGFit
 
 from bpp1d.models.rl.train import RLHyperparam, train_ppo
 from bpp1d.structure.solution import Solution
 from bpp1d.utils.exp_parser import ExpModelConfig, ExpProblemConfig
-
+from bpp1d.utils.visualizer import Visualizer
+import random
+import numpy as np
 app = typer.Typer()
 
 rl_app = typer.Typer()
@@ -27,20 +30,20 @@ DEFAULT_RL_CAPACITY = 100
 DEFAULT_TRAIN_ENV_NUM = 100
 DEFAULT_STEP_PER_EPOCH = 10000
 
-class DistributionType(str, Enum):
-    uniform = "uniform"
-    normal = "normal"
-    discrete = "discrete"
+# class DistributionType(str, Enum):
+#     uniform = "uniform"
+#     normal = "normal"
+#     discrete = "discrete"
 
 
 
 @rl_app.command("train")
 def rl_train(
-    distribution_choice: Annotated[DistributionType, 
+    distribution_choice: Annotated[str, 
                                     Option("-d", help="Distribution for training environment")] 
-                                        = DistributionType.uniform,
-    items:Annotated[List[int], Option("-i", "--item", help="item kinds in the problem")] 
-                                = DEFAULT_RL_TRAIN_ITEMS,
+                                        = 'uniform',
+    items:Annotated[Optional[List[int]], Option("-i", "--item", help="item kinds in the problem")] 
+                                = None,
     probs:Annotated[Optional[List[float]], Option("-p", "--prob", 
                                                         help="probability list")] = None,
     capacity: Annotated[int, Option("-C", help="Bin capacity")] = DEFAULT_RL_CAPACITY,
@@ -59,20 +62,22 @@ def rl_train(
     if not os.path.exists(model_path):
         os.mkdir(model_path)
 
+    distribution = generate_discrete_dist(items, distribution_choice, probs=probs)
 
-    if distribution_choice == DistributionType.uniform:
-        distribution = Uniform(items)
-    elif distribution_choice == DistributionType.normal:
-        distribution = Binomial(items)
-    elif distribution_choice == DistributionType.discrete:
-        distribution = Discrete(probs, items)
-    else:
-        print("Not implemented")
-        raise NotImplementedError
+    # if distribution_choice == DistributionType.uniform:
+    #     distribution = Uniform(items)
+    # elif distribution_choice == DistributionType.normal:
+    #     distribution = Binomial(items)
+    # elif distribution_choice == DistributionType.discrete:
+    #     distribution = Discrete(probs, items)
+    # else:
+    #     print("Not implemented")
+    #     raise NotImplementedError
 
     # target_problem = make_bpp(distribution_choice.capitalize() + "1D")
     target_problem = Problem(Bpp1DRandomInitiator(capacity, item_per_instance, 
                                                     test_instance_num, distribution))
+    print(target_problem.configuration)
     param = RLHyperparam(lr, epoch, batch_size, buffer_size, DEFAULT_STEP_PER_EPOCH, DEFAULT_TRAIN_ENV_NUM,
                             item_per_instance, DEFAULT_TRAIN_ENV_NUM, eps_clip, discount_factor)
     res = train_ppo(distribution, capacity, target_problem, model_path,file_name, param)
@@ -84,8 +89,13 @@ def experiment_problem(
         experiment_dir: Annotated[Path, Argument(help="experiment directory")] = "experiment/",
         config_filename: Annotated[str, Option("-c", "--config", 
                                                     help="problem configuration file")] = "config.json",
+        seed: Annotated[int, Option("-s", "--seed", help="seed")] = 42,
         verbose: Annotated[bool, Option("-v", "--verbose", help="print extra information")] = False
     ):
+    
+    random.seed(seed)
+    np.random.seed(seed)
+    
     
     config_file = experiment_dir / config_filename
     if not config_file.exists():
@@ -104,6 +114,11 @@ def experiment_problem(
 
     total_results: Sequence[Dict[str, Solution]] = []
     total_infos: Sequence[Dict[str, Any]] = []
+    visualize_dir = experiment_dir / "visualize/"
+    if not visualize_dir.exists():
+        os.mkdir(visualize_dir)
+        
+    visualizer = Visualizer(visualize_dir)
 
     print("===== Solve Problem =====")
     # solve problems
@@ -113,18 +128,19 @@ def experiment_problem(
         true_demands = {i: instance.sequence.count(i) for i in sorted(list(set(instance)))}
         ground_truth = CGFit(problem.configuration['capacity'], instance, true_demands)
         ground_truth.name = 'ground_truth'
-        models.append(ground_truth)
+        ground_truth.build()
+        true_solution, info = ground_truth.solve()
+        print("Ground Truth", true_solution.metrics)
         results = {}
         infos = {}
         for model in models:
             name = model.name
-            # if verbose:
-                # print(f"Model {model.name} executing.")
             model.build()
             solution, info = model.solve()
             results[name] = solution
             infos[name] = info
             if verbose:
+                visualizer.visualize_solution(f"{i}_{name}.png", "solution", solution, (min(instance), max(instance)))
                 print(f"Model: {name}", solution.metrics)
 
         # all_results['instances'][i] = results
@@ -133,10 +149,13 @@ def experiment_problem(
         if verbose:
             total_infos.append(infos)
 
-
+    # for i, res in enumerate(total_results):
+        # for sol, name in res.items():
+            # visualizer.visualize_solutions(f"{i}_{name}.png", "solution", sol)
     print("===== Analysis =====")
     
     instance_dir = experiment_dir / 'instances/'
+
     # if instance_dir.exists() and instance_dir.is_dir():
     #     # clear instances
     #     os.rmdir(instance_dir)
@@ -152,8 +171,13 @@ def experiment_problem(
         waste = {n:r.waste for n, r in res.items() }
         ordered_waste = sorted([k for k in waste if k != 'ground_truth'], key=lambda n: waste[n])
         waste_orders.append(ordered_waste)
-        gap = {k:v.num_bins / res['ground_truth'].num_bins  
-                for k, v in res.items() if k != 'ground_truth'}
+        gap = {
+                k: {
+                    "bins": v.num_bins - res['ground_truth'].num_bins,
+                    "rate": v.num_bins / res['ground_truth'].num_bins
+                }
+                for k, v in res.items() if k != 'ground_truth'
+            }
         all_gap.append(gap)
         
         winner = ordered_waste[0] # minimum
@@ -165,8 +189,6 @@ def experiment_problem(
         if verbose:
             with open(instance_dir / f"instance_{i}_info.json", 'w+') as f:
                 json.dump(total_infos[i], f)
-
-    # avg_gap = [for gap in all_gap]
 
     summary = {
                 'wins': win_rates,

@@ -75,7 +75,7 @@ class Bpp1DPotentialEnv(gym.Env):
         return int(sum(self.bin_levels)) + self.filled_bins
 
     def mask_potentials(self, item: int):
-        assert item <= self.capacity
+        assert item <= self.capacity, f"item:{item}, capacity: {self.capacity}"
         mask = (self.bin_levels > 0).astype(float)
         overflow = self.capacity - item
         mask[overflow+1:] = 0
@@ -96,7 +96,7 @@ class Bpp1DPotentialEnv(gym.Env):
 
             # print("gg")
             return self.state, reward, terminated, truncated, {}
-        elif action == 0:
+        elif action == 0 and self.item < self.capacity:
             # new bin
             self.bin_levels[self.item] += 1
             waste = self.capacity -self.item

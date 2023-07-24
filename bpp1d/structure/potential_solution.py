@@ -33,9 +33,9 @@ class PotentialSolution(Solution):
     def metrics(self):
         return {
             'capacity': int(self.capacity),
-            'bins': self.num_bins,
+            'bins': int(self.num_bins),
             'waste': int(self.waste),
-            'filled_rate': self.filled_bins / self.num_bins
+            # 'filled_rate': self.filled_bins / self.num_bins
         }
 
     def __repr__(self):
