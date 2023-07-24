@@ -5,9 +5,10 @@ from .solution import Solution
 
 
 class PotentialSolution(Solution):
-    def __init__(self, capacity: int, potential: List[int]) -> None:
-        assert len(potential) == capacity + 1
+    def __init__(self, capacity: int, potential: List[int], filled_bins:int) -> None:
+        assert len(potential) == capacity
         self.potential = potential
+        self.filled_bins = filled_bins
         self.capacity = capacity
 
     def __len__(self):
@@ -24,13 +25,17 @@ class PotentialSolution(Solution):
     @property
     def waste(self):
         return sum([(self.capacity - idx) * num for idx, num in enumerate(self.potential[:-1])])
+    @property
+    def num_bins(self):
+        return sum(self.potential) + self.filled_bins
 
     @property
     def metrics(self):
         return {
             'capacity': int(self.capacity),
-            'bins': self.__len__(),
-            'waste': int(self.waste)
+            'bins': int(self.num_bins),
+            'waste': int(self.waste),
+            # 'filled_rate': self.filled_bins / self.num_bins
         }
 
     def __repr__(self):
@@ -39,7 +44,7 @@ class PotentialSolution(Solution):
 
     def to_json(self) -> str:
         return json.dumps({
-            "metrics": self.metrics(),
+            "metrics": self.metrics,
             "potential": self.potential
         })
 

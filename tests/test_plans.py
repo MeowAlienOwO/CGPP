@@ -2,7 +2,7 @@ from typing import List
 import pytest
 from bpp1d.structure.bin_pattern import BinPattern
 from bpp1d.structure.bpp_plan import BinPlanExecutor, BppPlan
-from bpp1d.utils.anyfit import best_fit_choice
+from bpp1d.utils.heuristics import best_fit_choice
 import random
 
 

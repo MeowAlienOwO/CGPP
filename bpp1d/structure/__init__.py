@@ -1,4 +1,5 @@
 from .bin_solution import BinSolution
+from .potential_solution import PotentialSolution
 from .bpp_bin import BppBin, BinWithPattern
 from .bin_pattern import BinPattern
 from .bpp_plan import BppPlan
@@ -10,5 +11,6 @@ __all__ = [
     "BppBin",
     "BinWithPattern",
     "BinPattern",
-    "BppPlan"
+    "BppPlan",
+    "PotentialSolution"
 ]

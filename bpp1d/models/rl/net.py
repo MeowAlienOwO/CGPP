@@ -18,7 +18,7 @@ class Actor(nn.Module):
             nn.Linear(inner_dim, action_size)
         )
 
-    def forward(self, obs, state=None):
+    def forward(self, obs, state=None, info=None):
         obs_state, mask = obs2tensor(obs)
         log_prob = self.model(obs_state)
 

@@ -1,6 +1,6 @@
-from .column_generation import ColumnGeneration, SolutionStatus
+from .column_generation import ColumnGeneration, MipSolverStatus
 
 __all__ = [
     "ColumnGeneration",
-    "SolutionStatus"
+    "MipSolverStatus"
 ]

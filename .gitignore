@@ -165,3 +165,9 @@ cython_debug/
 
 # experiments directory
 experiments/
+
+#models
+models/
+
+.VSCodeCounter/
+.ruff_cache/

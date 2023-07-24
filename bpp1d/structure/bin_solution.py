@@ -22,26 +22,37 @@ class BinSolution(Solution):
         return len(self.bins)
         
     def __repr__(self):
-        repr_str = "\n".join(["{}: {}".format(k, v) for k, v in self.metrics().items()])
+        repr_str = "\n".join(["{}: {}".format(k, v) for k, v in self.metrics.items()])
         return repr_str
 
     def show_exact(self):
         all_str = self.__repr__() + "\n" \
                         + "\n".join([str(b) + f"({b.filled_space}, {b.empty_space})" 
-                                                        for b in sorted(self.bins, 
-                                                                        key=lambda b: b.empty_space, reverse=True)])
+                                        for b in sorted(self.bins, 
+                                                        key=lambda b: b.empty_space, reverse=True)])
         return all_str
     
+    @property
     def metrics(self):
         return {
             'capacity': int(self.capacity),
             'item_count': int(self.total_items),
-            'bins': len(self.bins),
-            'waste': int(self.waste)
+            'bins': self.num_bins,
+            'waste': int(self.waste),
+            'filled_rate': self.num_filled_bins / self.num_bins,
         }
     @property
     def waste(self):
         return sum([b.empty_space for b in self.bins])
+
+    @property
+    def num_filled_bins(self) -> int:
+        return len([b for b in self.bins if b.filled_space == b.capacity])
+
+
+    @property
+    def num_bins(self) -> int:
+        return len(self.bins)
 
     @property 
     def total_items(self):
@@ -68,6 +79,6 @@ class BinSolution(Solution):
 
     def to_json(self) -> str:
         return json.dumps({
-            "metrics": self.metrics(),
+            "metrics": self.metrics,
             "bins": self.bins
         })

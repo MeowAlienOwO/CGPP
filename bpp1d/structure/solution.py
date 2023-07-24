@@ -16,6 +16,10 @@ class Solution:
     @property
     def capacity(self) -> int:
         return self._capacity
+
+    @property
+    def num_bins(self) -> int:
+        return NotImplemented
     
     @capacity.setter
     def capacity(self, value: int) -> None:

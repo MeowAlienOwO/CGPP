@@ -4,6 +4,15 @@ from bpp1d.structure import BppBin
 
 HeuristicChoiceFn = Callable[[int, Sequence[BppBin]], int]
 
+
+def generate_heuristic(name: str) -> HeuristicChoiceFn:
+    if name == 'best_fit':
+        return best_fit_choice
+    elif name == 'first_fit':
+        return first_fit_choice
+    else:
+        raise NotImplementedError
+
 def best_fit_choice(item: int, bins: Sequence[BppBin]) -> int:
     """Return the choice using best fit heuristic
 
@@ -38,3 +47,6 @@ def first_fit_choice(item: int, bins: Sequence[BppBin]) -> int:
     else:
         choice = bins.index(fit[0])
     return choice
+
+def refined_harmonic(item: int, bins:Sequence[BppBin]) -> int:
+    pass

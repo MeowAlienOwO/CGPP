@@ -8,8 +8,9 @@ from bpp1d.structure import Solution
 
 class ModelStatus(enum.Enum):
     WAITING = 0
-    SOLVING  = 1
-    FINISHED = 2
+    BUILD = 1
+    SOLVING  = 2
+    FINISHED = 3
     ERROR = -1
 
 class Model:
@@ -22,7 +23,8 @@ class Model:
     def build(self) -> Any:
         """build the model
         """
-        pass
+        self.status = ModelStatus.BUILD
+        return self.status
 
     @abstractmethod
     def solve(self) -> Tuple[Solution, Dict | None]:
