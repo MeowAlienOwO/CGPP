@@ -96,12 +96,16 @@ class Bpp1DPotentialEnv(gym.Env):
 
             # print("gg")
             return self.state, reward, terminated, truncated, {}
-        elif action == 0 and self.item < self.capacity:
+        elif action == 0: #and self.item < self.capacity:
             # new bin
-            self.bin_levels[self.item] += 1
+            if self.item < self.capacity:
+                self.bin_levels[self.item] += 1
+            else:
+                self.filled_bins += 1
             waste = self.capacity -self.item
             reward = -1 * waste # / self.capacity
             # print("open new bin")
+
         else:
             if action + self.item == self.capacity:
                 self.filled_bins += 1
@@ -113,6 +117,7 @@ class Bpp1DPotentialEnv(gym.Env):
             self.bin_levels[action] -= 1
             # print(f"put into {action}")
         
+        reward = reward / self.capacity
         self.total_reward += reward
         self.total_waste += waste
         self.step_count += 1

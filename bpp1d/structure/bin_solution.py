@@ -31,7 +31,7 @@ class BinSolution(Solution):
                                         for b in sorted(self.bins, 
                                                         key=lambda b: b.empty_space, reverse=True)])
         return all_str
-    
+
     @property
     def metrics(self):
         return {

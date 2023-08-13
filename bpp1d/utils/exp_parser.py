@@ -2,7 +2,7 @@ from pathlib import Path
 import json
 from typing import Dict, List, Sequence
 from bpp1d.models import VALID_MODELS, Model, RLModel, CGFit, CGReplan, CGStateShift
-from bpp1d.models.heruistics import HeuristicModel
+from bpp1d.models.heruistics import HeuristicModel, HarmonicKModel
 from bpp1d.utils.heuristic_choice import generate_heuristic
 from bpp3d_dataset.utils.distributions import Discrete, Uniform, Binomial, Poisson, generate_discrete_dist
 from bpp3d_dataset.problems import Problem, make_bpp, Bpp1DRandomInitiator
@@ -67,15 +67,29 @@ class ExpModelConfig(BaseConfig):
         config = self.get_config(model_name)
         model_type = config['type']
         if model_type == 'heuristic':
-            choice_fn = generate_heuristic(config['heuristic'])
-            return HeuristicModel(capacity, instance, name=model_name, choice_fn= choice_fn)
+            if 'fit' in config['heuristic']:
+                choice_fn = generate_heuristic(config['heuristic'])
+            elif config['heuristic'] == 'harmonic':
+                return HarmonicKModel(capacity, instance, K = config.get('K', 20))
+            else:
+                raise NotImplementedError
+                
+            return HeuristicModel(capacity, instance, name=model_name, choice_fn= choice_fn, **config)
         elif model_type == 'rl_model':
             return RLModel(capacity, instance, config['checkpoint_path'])
         elif model_type == 'cg_fit':
             # demand = config.get('demand', {i: instance.count(i) 
                                             # for i in sorted(list(set(instance)))})
+            if 'priori' in  config:
 
-            demand = {int(k): v for k ,v in config.get('demand', {}).items()}
+                dist = config['priori']
+
+                items = self._generate_item_size(dist, instance)
+                distribution = generate_discrete_dist(dist_key=dist['name'], items=items, kwargs=dist)
+                demand = {i: int(distribution.p(i) * len(instance) )for i in items}
+            else:
+
+                demand = {int(k): v for k ,v in config.get('demand', {}).items()}
             
             return CGFit(capacity, instance, demand, name=model_name)
 
@@ -85,7 +99,6 @@ class ExpModelConfig(BaseConfig):
             # distribution = self._generate_distribution(dist, items)
             items = self._generate_item_size(dist, instance)
             distribution = generate_discrete_dist(dist_key=dist['name'], items=items, kwargs=dist)
-            # print(distribution)
             
             return CGReplan(capacity, instance, distribution, consider_opened_bins=True)
 
@@ -95,15 +108,16 @@ class ExpModelConfig(BaseConfig):
             items = self._generate_item_size(dist, instance)
             distribution = generate_discrete_dist(dist_key=dist['name'], items=items, kwargs=dist)
             # distribution = self._generate_distribution(dist, items)
-            if 'estimator' in config:
-                if config['estimator'] == 'kernel':
-                    state_estimator = KernelDensityEstimator(distribution)
-                else:
-                    state_estimator = SimpleStateEstimator(distribution)
-            else:
-                state_estimator = SimpleStateEstimator(distribution)
+            # if 'estimator' in config:
+            #     if config['estimator'] == 'kernel':
+            #         state_estimator = KernelDensityEstimator(distribution)
+            #     else:
+            #         state_estimator = SimpleStateEstimator(distribution)
+            # else:
+            #     state_estimator = SimpleStateEstimator(distribution)
             # print(distribution)
-            return CGStateShift(capacity, instance, state_estimator, consider_opened_bins=True)
+            state_estimator = KernelDensityEstimator(distribution)
+            return CGStateShift(capacity, instance, state_estimator, consider_opened_bins=True, **config)
         else:
             raise NotImplementedError(f"Model {model_type} is not implemented")
     
@@ -128,6 +142,7 @@ class ExpProblemConfig(BaseConfig):
         super().__init__(content)
     
     def create_problem(self) -> Problem:
+        print(self._raw_content)
         if not self._config_dict:
             return make_bpp(self._raw_content)
         else:

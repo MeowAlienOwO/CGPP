@@ -35,6 +35,12 @@ class StateEstimator:
     def __call__(self, *args: Any, **kwargs: Any) -> Discrete:
         return self.estimate(*args, **kwargs)
 
+    def average_size(self) -> float:
+        return sum(self.priori.p(i) * i for i in self.priori.items)
+    
+    def expected_item_size(self, length: int) -> float:
+        return length * self.average_size()
+
 
 class SimpleStateEstimator(StateEstimator):
     def __init__(self, priori: Discrete, kl_theshold:float = 0.7, smooth: bool=True):
@@ -70,38 +76,58 @@ class SimpleStateEstimator(StateEstimator):
             return super().update_priori(sequence)
 
 class KernelDensityEstimator(StateEstimator):
-    def __init__(self, priori: Discrete, kl_theshold:float = 0.7, memorize_all=True):
+    def __init__(self, priori: Discrete, kl_theshold:float = 0.1, memorize_all=True, bandwidth=2):
         super().__init__(priori)
         # self.bandwidth = (max(self.priori.items) - min(self.priori.items)) / (len(self.priori.items) * 2)
-        self.bandwidth = (max(self.priori.items) - min(self.priori.items)) / (4)
-        self.memory = []
+        # self.bandwidth = (max(self.priori.items) - min(self.priori.items)) / (4)
+        # print(self.bandwidth)
+        self.bandwidth = bandwidth
+        self.memory = {i: 0 for i in self.priori.items}
         # print(self.bandwidth, max(self.priori.items), min(self.priori.items))
         self.memorize_all = memorize_all
         self.kl_theshold = kl_theshold
-        self.model = KernelDensity(bandwidth=self.bandwidth,kernel='gaussian') # assume gaussian
+        # self.model = KernelDensity(bandwidth=self.bandwidth,kernel='gaussian') # assume gaussian
+        self.model=KernelDensity(bandwidth=self.bandwidth)
         
 
     def is_fit(self, sequence: Sequence[int]) -> bool:
         estimated = self.estimate(sequence)
+        # print(estimated)
         # print(kl_divergence(self.priori, estimated))
         return kl_divergence(self.priori, estimated) < self.kl_theshold
         
     def estimate(self, sequence: Sequence[int]) -> Discrete:
+        
+        
+        new_estimate = self.memory.copy()
+        for i in sequence:
+            new_estimate[i] += 1
+
+        total = sum(new_estimate.values())
+        probs = [new_estimate.get(item) / total for item in self.priori.items]
+        return Discrete(probs, self.priori.items)
+        
         # self.model.fit(np.asarray(sequence).reshape((-1, 1)))
         # logits = self.model.score_samples(np.asarray(self.priori.items).reshape((-1, 1)))
         # # probs = softmax(logits)
-        if self.memorize_all:
+        # if self.memorize_all:
 
-            return super().estimate(self.memory + list(sequence)) # 
-        else:
-            return super().estimate(list(sequence)) # 
+        #     return super().estimate(self.memory + list(sequence)) # 
+        # else:
+        #     return super().estimate(list(sequence)) # 
         
         # return Discrete(probs, self.priori.items)
 
     def update_priori(self, sequence: Sequence[int]):
-        self.model.fit(np.asarray(sequence).reshape((-1, 1)))
+        
+        # self.model.fit(np.asarray(sequence).reshape((-1, 1)))
+        data = np.asarray(sequence)
+        self.model.fit(data[:, None])
         if self.memorize_all:
-            self.memory += list(sequence)
+            # self.memory += list(sequence)
+            for i in sequence:
+                self.memory[i] += 1
+
         logits = self.model.score_samples(np.asarray(self.priori.items).reshape((-1, 1)))
         # probs = np.exp(probs).tolist()
         probs = softmax(logits)

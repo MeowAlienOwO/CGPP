@@ -42,7 +42,7 @@ def train_ppo(distribution: Discrete, capacity:int, target_problem: Problem,
     
     def _test_env_create(instance: BppInstance):
         # print(instance.configuration['capacity'])
-        return Bpp1DPotentialEnv(instance, instance.configuration['capacity'])
+        return Bpp1DPotentialEnv(instance, instance.configuration['capacity'], reset_distribution=distribution)
 
     def _dist_fn(*logits):
         return Categorical(F.softmax(*logits, dim=-1))
@@ -67,6 +67,7 @@ def train_ppo(distribution: Discrete, capacity:int, target_problem: Problem,
 
     def _save_best_fn(policy):
         torch.save(policy.state_dict(), model_path / filename)
+    
 
     result = ts.trainer.onpolicy_trainer(policy, train_collector, test_collector, 
                                             max_epoch=param.epoch, step_per_epoch=param.step_per_epoch,
@@ -77,5 +78,3 @@ def train_ppo(distribution: Discrete, capacity:int, target_problem: Problem,
                                             save_best_fn = _save_best_fn,
                                             logger=logger)
     return result
-
-

@@ -32,8 +32,14 @@ def _opened_bins_estimator(distribution: Discrete, remain_items: int,
     else:
         estimate_remains = {i: math.ceil(remain_items * p) for i, p in distribution.prob_dict.items()}
     for b in opened_bins:
-        for item in b:
-            estimate_remains[item] = estimate_remains.get(item, 0) + 1
+        # for item in b:
+        #     estimate_remains[item] = estimate_remains.get(item, 0) + 1
+        _, _, nonfilled = b.check()
+        # nonfilled_dict = { for i in set(nonfilled)}
+        for i in nonfilled:
+            estimate_remains[i] = max(estimate_remains[i] - 1, 0)
+
+        
     return estimate_remains
 
 def _simple_estimator(distribution: Discrete, remain_items: int, 

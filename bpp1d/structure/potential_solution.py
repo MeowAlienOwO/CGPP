@@ -24,7 +24,7 @@ class PotentialSolution(Solution):
 
     @property
     def waste(self):
-        return sum([(self.capacity - idx) * num for idx, num in enumerate(self.potential[:-1])])
+        return sum([(self.capacity - idx) * num for idx, num in enumerate(self.potential)])
     @property
     def num_bins(self):
         return sum(self.potential) + self.filled_bins

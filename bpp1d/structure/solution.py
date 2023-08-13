@@ -30,3 +30,4 @@ class Solution:
 
     def to_json(self) -> str:
         return NotImplemented
+    

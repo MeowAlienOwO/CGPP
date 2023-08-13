@@ -43,10 +43,11 @@ def first_fit_choice(item: int, bins: Sequence[BppBin]) -> int:
     """
     fit = [b for b in bins if b.empty_space - item >= 0]
     if len(fit) == 0:
-        choice = len(fit)
+        choice = -1
     else:
         choice = bins.index(fit[0])
     return choice
 
-def refined_harmonic(item: int, bins:Sequence[BppBin]) -> int:
-    pass
+# def refined_harmonic(item: int, bins:Sequence[BppBin]) -> int:
+#     # see https://en.wikipedia.org/wiki/Harmonic_bin_packing
+#     # 

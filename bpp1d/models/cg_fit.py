@@ -31,8 +31,11 @@ class CGFit(Model):
         assert self.plan is not None
         self.plan_executor = BinPlanExecutor(self.plan, self.capacity, self.bins, shall_rebalance=False)
         self.status = ModelStatus.SOLVING
-        for item in self.instance:
-            self.plan_executor.put(item, best_fit_choice)
+        for i, item in enumerate(self.instance):
+            if i / len(self.instance) > 0.9:
+                self.plan_executor.heuristic_put(item, best_fit_choice)
+            else:
+                self.plan_executor.put(item, best_fit_choice)
         
         self.status = ModelStatus.FINISHED
 

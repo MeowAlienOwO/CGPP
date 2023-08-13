@@ -60,6 +60,6 @@ class RLModel(Model):
             self.step_count += 1
 
         self.status = ModelStatus.FINISHED if not truncated else ModelStatus.ERROR
-        return PotentialSolution(self.capacity, self.env.bin_levels.tolist(), self.env.filled_bins), info
+        return PotentialSolution(self.capacity, self.env.bin_levels.astype(int).tolist(), self.env.filled_bins), info
 
         
