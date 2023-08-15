@@ -17,9 +17,9 @@
 # python -m bpp1d.main exp problem experiments/exp_set14 -v
 # python -m bpp1d.main exp problem experiments/exp_set15 -v
 
-python -m bpp1d.main exp problem experiments/exp_orgym_bw1 -v
-python -m bpp1d.main exp problem experiments/exp_orgym_lw1 -v
-python -m bpp1d.main exp problem experiments/exp_orgym_pp1 -v
-python -m bpp1d.main exp problem experiments/exp_orgym_bw1_100 -v
-python -m bpp1d.main exp problem experiments/exp_orgym_lw1_100 -v
-python -m bpp1d.main exp problem experiments/exp_orgym_pp1_100 -v
+# python -m bpp1d.main exp problem experiments/exp_orgym_bw1 -v
+# python -m bpp1d.main exp problem experiments/exp_orgym_lw1 -v
+# python -m bpp1d.main exp problem experiments/exp_orgym_pp1 -v
+# python -m bpp1d.main exp problem experiments/exp_orgym_bw1_100 -v
+# python -m bpp1d.main exp problem experiments/exp_orgym_lw1_100 -v
+# python -m bpp1d.main exp problem experiments/exp_orgym_pp1_100 -v

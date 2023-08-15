@@ -8,6 +8,7 @@ class BinPattern:
 
     def __init__(self, items:Iterable[int]) -> None:
         self.items = tuple(sorted(items))
+        self.modified = False
 
     def __eq__(self, other: object) -> bool:
         if not isinstance(other, BinPattern):

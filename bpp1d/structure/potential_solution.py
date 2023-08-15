@@ -5,11 +5,12 @@ from .solution import Solution
 
 
 class PotentialSolution(Solution):
-    def __init__(self, capacity: int, potential: List[int], filled_bins:int) -> None:
+    def __init__(self, capacity: int, potential: List[int], filled_bins:int, choice_sequence=[]) -> None:
         assert len(potential) == capacity
         self.potential = potential
         self.filled_bins = filled_bins
         self.capacity = capacity
+        self.choice_sequence = choice_sequence
 
     def __len__(self):
         """return total bins
@@ -42,9 +43,15 @@ class PotentialSolution(Solution):
         return self.potential.__repr__()
 
 
-    def to_json(self) -> str:
-        return json.dumps({
+    @property
+    def data_obj(self):
+        return {
             "metrics": self.metrics,
-            "potential": self.potential
-        })
+            "potential": self.potential,
+            "filled_bins": self.filled_bins,
+            "choice": self.choice_sequence
+        }
+
+    def to_json(self) -> str:
+        return json.dumps(self.data_obj)
 

@@ -82,11 +82,23 @@ class BppBin(object):
     
 
 class BinWithPattern(BppBin):
+    old_pattern = None
     def __init__(self, capacity: int, pattern: BinPattern, items: List | None = None):
         super().__init__(capacity=capacity, items=items)
-        self.pattern = pattern
+        self._pattern = pattern
+        # self.old_pattern = None
 
-    
+
+    @property
+    def pattern(self):
+        return self._pattern
+
+    @pattern.setter
+    def pattern(self, value):
+        if not self.old_pattern:
+            self.old_pattern = self._pattern
+        self._pattern = value
+
     def check(self)-> Tuple[List[int], List[int], List[int]]:
         """return pattern checking result.
 

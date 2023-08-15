@@ -2,7 +2,7 @@ from typing import Sequence
 from .solution import Solution
 import json
 
-from bpp1d.structure.bpp_bin import BppBin
+from bpp1d.structure.bpp_bin import BppBin, BinWithPattern
 
 
 
@@ -77,8 +77,14 @@ class BinSolution(Solution):
     def max_filled_bin(self):
         return max(self.bins, key=lambda b: b.filled_space)
 
-    def to_json(self) -> str:
-        return json.dumps({
+    @property
+    def data_obj(self):
+        return {
             "metrics": self.metrics,
-            "bins": self.bins
-        })
+            "bins": [b.items for b in self.bins],
+            "patterns": [] if not all(isinstance(b, BinWithPattern) for b in self.bins)  \
+                            else [b.pattern.as_dict() for b in self.bins]
+        }
+
+    def to_json(self) -> str:
+        return json.dumps(self.data_obj)

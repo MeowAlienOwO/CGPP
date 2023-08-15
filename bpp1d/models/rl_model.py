@@ -13,7 +13,7 @@ from bpp1d.structure import Solution, PotentialSolution
 class RLModel(Model):
 
     def __init__(self, capacity: int, instance: Sequence[int], 
-                    checkpoint_path: Path, name: str = 'rl_model'):
+                    checkpoint_path: Path, name: str = 'ORL-benchmark'):
         """A implementation of 
 
         Args:
@@ -50,16 +50,19 @@ class RLModel(Model):
         terminated = False
         truncated = False
         total_reward = 0
+        actions = []
         while not (terminated or truncated):
             logits, _ = self.actor(obs)
 
-            dist = Categorical(F.softmax(logits, dim=-1))
-            action = dist.sample().item()
+            # dist = Categorical(F.softmax(logits, dim=-1))
+            # action = dist.sample().item()
+            action = torch.argmax(logits).item()
+            actions.append([self.env.item, action])
             obs, rew, terminated, truncated, info = self.env.step(action)
             total_reward += rew
             self.step_count += 1
 
         self.status = ModelStatus.FINISHED if not truncated else ModelStatus.ERROR
-        return PotentialSolution(self.capacity, self.env.bin_levels.astype(int).tolist(), self.env.filled_bins), info
+        return PotentialSolution(self.capacity, self.env.bin_levels.astype(int).tolist(), self.env.filled_bins, actions), info
 
         

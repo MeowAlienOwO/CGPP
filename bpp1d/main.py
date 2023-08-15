@@ -116,12 +116,16 @@ def experiment_problem(
     true_solutions: Sequence[Solution] = []
     total_infos: Sequence[Dict[str, Any]] = []
     visualize_dir = experiment_dir / "visualize/"
+    solution_dir = experiment_dir / "solution/"
+    if not solution_dir.exists():
+        os.mkdir(solution_dir)
+
     if visualize:
         if not visualize_dir.exists():
             os.mkdir(visualize_dir)
-        else:
-            for f in visualize_dir.glob("*"):
-                os.remove(f)
+        # else:
+        #     for f in visualize_dir.glob("*"):
+        #         os.remove(f)
         
     visualizer = Visualizer(visualize_dir)
 
@@ -133,11 +137,13 @@ def experiment_problem(
         true_demands = {i: instance.sequence.count(i) for i in sorted(list(set(instance)))}
 
         oracle = Oracle(problem.configuration['capacity'], instance, true_demands)
-        oracle.name = 'oracle'
+        oracle.name = 'Oracle'
         oracle.build()
 
         oracle_solution, info = oracle.solve()
         true_solutions.append(oracle_solution)
+        with open(solution_dir / f"{i}_Oracle.json", 'w+') as f:
+            json.dump(oracle_solution.data_obj, f)
 
         # print(ground_truth.plan)
         print("Oracle", oracle_solution.metrics)
@@ -153,12 +159,15 @@ def experiment_problem(
                 # if isinstance(solution ,BinSolution):
                     # visualizer.visualize_bin_solution(f"{i}_{name}.png", "solution", solution)
                 print(f"Model: {name}", solution.metrics)
+                with open(solution_dir / f"{i}_{name}.json", 'w+') as f:
+                    json.dump(solution.data_obj, f)
+
 
         # results['ground_truth'] = true_solution
         if visualize:
             visualize = results.copy()
-            visualize['ground_truth'] = oracle_solution
-            visualizer.visualize_solutions(f"{i}.png", "Solution Comparison", 
+            visualize['Oracle'] = oracle_solution
+            visualizer.visualize_solutions_sns(f"{i}.pdf", "Solution Bin Levels Comparison", 
                                             list(visualize.values()), list(visualize.keys()))
 
 
@@ -252,13 +261,13 @@ def experiment_problem(
     res_avg = {
         k: {
             "bins": {
-                "avg": np.average([g[k]["bins"] for g in all_gap]),
-                "std": np.std([g[k]["bins"] for g in all_gap]),
+                "avg": np.average([g[k]["bins"] for g in all_res]),
+                "std": np.std([g[k]["bins"] for g in all_res]),
             },
 
             "waste": {
-                "avg": np.average([g[k]["waste"] for g in all_gap]),
-                "std": np.std([g[k]["waste"] for g in all_gap]),
+                "avg": np.average([g[k]["waste"] for g in all_res]),
+                "std": np.std([g[k]["waste"] for g in all_res]),
             },
         }
         for k in all_res[0].keys()

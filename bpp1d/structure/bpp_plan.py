@@ -157,7 +157,8 @@ class BinPlanExecutor:
         choice = fallback(item, self.bins)
 
         if choice < 0:
-            self.bins.append(BinWithPattern(self.capacity, pattern=BinPattern([item, self.capacity-item]), items=[item]))
+            self.bins.append(BinWithPattern(self.capacity, 
+                                            pattern=BinPattern([item, self.capacity-item]), items=[item]))
             return choice
         else:
             # adjust pattern and record replacement

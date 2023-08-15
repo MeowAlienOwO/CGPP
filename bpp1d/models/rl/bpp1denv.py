@@ -117,7 +117,7 @@ class Bpp1DPotentialEnv(gym.Env):
             self.bin_levels[action] -= 1
             # print(f"put into {action}")
         
-        reward = reward / self.capacity
+        # reward = reward / self.capacity
         self.total_reward += reward
         self.total_waste += waste
         self.step_count += 1
